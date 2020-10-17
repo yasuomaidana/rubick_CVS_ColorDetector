@@ -1,0 +1,10 @@
+00:00 - 04:40 -> Intro Rubiks Cube Simulator
+04:41 - 06:06 -> Overview Section (Manual)
+06:07 - 07:06 -> Command Section (Manual)
+07:07 - 14:44 -> Set Cube State command
+14:45 - 19:12 -> Get Cube State command
+19:13 - 25:42 -> Set Cube Moves command
+25:43 - 28:17 -> Conclusion
+
+NOTE: Ignore the error in 14:49 and 27:08, it is Get Cube State command (rather than Get Cube Moves).
+Tip: The tutorial is kind of long for the purpose, watch it at 2.0x speed.
