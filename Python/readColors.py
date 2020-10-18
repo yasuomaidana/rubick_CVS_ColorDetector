@@ -21,11 +21,15 @@ def cali():
     # Create levels arrays
     l_color = np.array([l_h,l_s,l_v])
     u_color = np.array([u_h,u_s,u_v])
-    return [l_color, u_color]
+
+    #Obtain kernel size
+    ks = cv2.getTrackbarPos("KS","Kernel Size")
+
+    return [l_color, u_color,ks]
+
 #Creates bars to obtain HSV values
 def creatBar():
     #### Create track bars
-    
     cv2.namedWindow(trName)
     ## Low HSV level
     cv2.createTrackbar("Low-H",trName,0,180,nothing)
@@ -36,6 +40,11 @@ def creatBar():
     cv2.createTrackbar("High-S",trName,255,255,nothing)
     cv2.createTrackbar("High-V",trName,255,255,nothing)
     ### Create track bars end
+
+    ##Bar to get kernel
+    cv2.namedWindow("Kernel Size")
+    cv2.createTrackbar("KS","Kernel Size",0,255,nothing)
+
 #Returns mask if user don't want to calibrate
 def noCali():
     l_h = 58
@@ -47,8 +56,9 @@ def noCali():
 
     l_color = np.array([l_h,l_s,l_v])
     u_color = np.array([u_h,u_s,u_v])
+    KS = 23
 
-    return [l_color, u_color]
+    return [l_color, u_color,KS]
 # Open the device at the ID 0 
 cap = cv2.VideoCapture(1)
 
@@ -68,12 +78,18 @@ while(True):
     #Convert mask to HSV format
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     if cal:
-        [l_color, u_color] = cali()
+        [l_color, u_color,ks] = cali()
     else:
-        [l_color, u_color] = noCali()
+        [l_color, u_color,ks] = noCali()
 
     #Create mask 
     mask = cv2.inRange(hsv,l_color,u_color)
+
+    #Erode mask
+    kernel = np.ones((ks,ks),np.uint8)
+    mask = cv2.erode(mask,kernel)
+    #Dilatation
+    mask = cv2.dilate(mask, kernel)
 
     #Apply mask to image
     masked = cv2.bitwise_and(hsv,hsv, mask=mask)
