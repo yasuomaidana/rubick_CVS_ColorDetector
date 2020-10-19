@@ -1,0 +1,6 @@
+{
+    "terminal.integrated.shell.windows": "C:\\Windows\\System32\\cmd.exe", 
+    "python.terminal.activateEnvironment" :true,
+    "python.venvPath": "C:\\Users\\yasuo\\.conda\\envs\\computer_vision",
+    "python.pythonPath": "C:\\Users\\yasuo\\.conda\\envs\\computer_vision\\python.exe",
+}
