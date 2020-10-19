@@ -59,8 +59,12 @@ def noCali():
     KS = 23
 
     return [l_color, u_color,KS]
+
+
+##Configuring OpenCV
 # Open the device at the ID 0 
 cap = cv2.VideoCapture(1)
+font = cv2.FONT_HERSHEY_SIMPLEX
 
 cal = int(input("Do you want to calibrate? Yes 1, No 0 : "))
 if cal:
@@ -94,7 +98,35 @@ while(True):
     #Apply mask to image
     masked = cv2.bitwise_and(hsv,hsv, mask=mask)
 
+    #Convert again to BGR format
     masked = cv2.cvtColor(masked, cv2.COLOR_HSV2BGR)
+    
+    #Obtain regions
+    _,contours,_ = cv2.findContours(mask,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+
+    na=1
+    for cnt in contours:
+        #len(cnt) number of sides 3 triangle...
+        #area = cv2.contourArea(cnt) 
+        approx = cv2.approxPolyDP(cnt,0.08*cv2.arcLength(cnt,True),True)#approx, list of points of the rectangle
+        #print(approx)
+        #Obtain points of approx to put text
+        x = approx.ravel()[0]
+        y = approx.ravel()[1]
+        #Obtains the moments
+        mom = cv2.moments(cnt)
+        #Obtains the center using moments
+        cen = (int(mom['m10'] / (mom['m00'] + 1e-5)), int(mom['m01'] / (mom['m00'] + 1e-5))) #mx,my
+        print("Centro del cuadro :"+str(na))
+        print(cen)
+        print("Color del centro del cuadro")
+        print(frame[x][y])
+        #Print contours
+        cv2.drawContours(frame,[approx],0,(0,0,0),5)
+        #Write name of the contour
+        cv2.putText(frame,"Cell"+str(na),(x,y+20),font,.4,(255,255,255),1)
+        na+=1
+
     # Display the resulting frame
     cv2.imshow('Frame',frame)
     cv2.imshow('Mask',mask)
