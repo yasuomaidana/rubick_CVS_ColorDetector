@@ -1,9 +1,7 @@
 import numpy as np
 import cv2 as cv2
 
-
 trName= "Track bars HSV format"
-
 
 #Created to use Trackbar
 def nothing(x):
@@ -60,83 +58,86 @@ def noCali():
 
     return [l_color, u_color,KS]
 
-
 ##Configuring OpenCV
 # Open the device at the ID 0 
 cap = cv2.VideoCapture(1)
 font = cv2.FONT_HERSHEY_SIMPLEX
 
-cal = int(input("Do you want to calibrate? Yes 1, No 0 : "))
-if cal:
-    creatBar()
+#cal = int(input("Do you want to calibrate? Yes 1, No 0 : "))
+
 
 #Check whether user selected camera is opened successfully.
 if not (cap.isOpened()):
     print("Could not open video device")
     
 
-while(True): 
-    # Capture frame-by-frame
-    ret, frame = cap.read()
 
-    #Convert mask to HSV format
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+def Obtain_Mask():
+    cal = 0
     if cal:
-        [l_color, u_color,ks] = cali()
-    else:
-        [l_color, u_color,ks] = noCali()
+        creatBar()
+    while(True): 
+        # Capture frame-by-frame
+        _, frame = cap.read()
+        #Convert mask to HSV format
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        if cal:
+            [l_color, u_color,ks] = cali()
+        else:
+            [l_color, u_color,ks] = noCali()
 
-    #Create mask 
-    mask = cv2.inRange(hsv,l_color,u_color)
+        #Create mask 
+        mask = cv2.inRange(hsv,l_color,u_color)
 
-    #Erode mask
-    kernel = np.ones((ks,ks),np.uint8)
-    mask = cv2.erode(mask,kernel)
-    #Dilatation
-    mask = cv2.dilate(mask, kernel)
+        #Erode mask
+        kernel = np.ones((ks,ks),np.uint8)
+        mask = cv2.erode(mask,kernel)
+        #Dilatation
+        mask = cv2.dilate(mask, kernel)
 
-    #Apply mask to image
-    masked = cv2.bitwise_and(hsv,hsv, mask=mask)
+        #Apply mask to image
+        masked = cv2.bitwise_and(hsv,hsv, mask=mask)
 
-    #Convert again to BGR format
-    masked = cv2.cvtColor(masked, cv2.COLOR_HSV2BGR)
-    
-    #Obtain regions
-    _,contours,_ = cv2.findContours(mask,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+        #Convert again to BGR format
+        masked = cv2.cvtColor(masked, cv2.COLOR_HSV2BGR)
+        
+        #Obtain regions
+        _,contours,_ = cv2.findContours(mask,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
 
-    na=1
-    for cnt in contours:
-        #len(cnt) number of sides 3 triangle...
-        #area = cv2.contourArea(cnt) 
-        approx = cv2.approxPolyDP(cnt,0.08*cv2.arcLength(cnt,True),True)#approx, list of points of the rectangle
-        #print(approx)
-        #Obtain points of approx to put text
-        x = approx.ravel()[0]
-        y = approx.ravel()[1]
-        #Obtains the moments
-        mom = cv2.moments(cnt)
-        #Obtains the center using moments
-        cen = (int(mom['m10'] / (mom['m00'] + 1e-5)), int(mom['m01'] / (mom['m00'] + 1e-5))) #mx,my
-        print("Centro del cuadro :"+str(na))
-        print(cen)
-        print("Color del centro del cuadro")
-        print(frame[x][y])
-        #Print contours
-        cv2.drawContours(frame,[approx],0,(0,0,0),5)
-        #Write name of the contour
-        cv2.putText(frame,"Cell"+str(na),(x,y+20),font,.4,(255,255,255),1)
-        na+=1
+        na=1
+        for cnt in contours:
+            #len(cnt) number of sides 3 triangle...
+            #area = cv2.contourArea(cnt) 
+            approx = cv2.approxPolyDP(cnt,0.08*cv2.arcLength(cnt,True),True)#approx, list of points of the rectangle
+            #print(approx)
+            #Obtain points of approx to put text
+            x = approx.ravel()[0]
+            y = approx.ravel()[1]
+            #Obtains the moments
+            mom = cv2.moments(cnt)
+            #Obtains the center using moments
+            cen = (int(mom['m10'] / (mom['m00'] + 1e-5)), int(mom['m01'] / (mom['m00'] + 1e-5))) #mx,my
+            print("Centro del cuadro :"+str(na))
+            print(cen)
+            print("Color del centro del cuadro")
+            print(frame[x][y])
+            #Print contours
+            cv2.drawContours(frame,[approx],0,(0,0,0),5)
+            #Write name of the contour
+            cv2.putText(frame,"Cell"+str(na),(x,y+20),font,.4,(255,255,255),1)
+            na+=1
 
-    # Display the resulting frame
-    cv2.imshow('Frame',frame)
-    cv2.imshow('Mask',mask)
-    cv2.imshow('Masked',masked)
-    #Waits for a user input to quit the application
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-    
-cap.release()
-cv2.destroyAllWindows()
+        # Display the resulting frame
+        cv2.imshow('Frame',frame)
+        cv2.imshow('Mask',mask)
+        cv2.imshow('Masked',masked)
+        #Waits for a user input to quit the application
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
+    cap.release()
+    cv2.destroyAllWindows()
+
+Obtain_Mask()
 ## Obtained from calibration
 
