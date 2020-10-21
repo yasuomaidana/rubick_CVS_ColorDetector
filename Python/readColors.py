@@ -1,5 +1,6 @@
 import numpy as np
 import cv2 as cv2
+from rubik_solver import utils
 
 trName= "Track bars HSV format"
 
@@ -71,7 +72,7 @@ if not (cap.isOpened()):
     print("Could not open video device")
     
 
-
+#Obtains the mask used for obtain the color cells
 def Obtain_Mask():
     cal = 0
     if cal:
@@ -94,10 +95,44 @@ def Obtain_Mask():
         mask = cv2.erode(mask,kernel)
         #Dilatation
         mask = cv2.dilate(mask, kernel)
+                
+        #Waits for a user input to quit the application
+        if cv2.waitKey(1) & 0xFF == ord('w'):
+            return mask
+        else:
+            cv2.putText(mask,"Press W key",(0,100),font,.9,(255,255,255),2) 
+            # Display the resulting frame
+            cv2.imshow('Mask',mask)
+    
+#Check wich color is given an array
+def checkCol(color):
+    verde = np.array([5, 148, 10])
+    naranja = np.array([7, 167, 245])
+    amarillo = np.array([10,255,251])  
+    rojo = np.array([2, 0, 232]) 
+    blanco = np.array([254, 254, 254]) 
+    azul = np.array([244, 0, 3]) 
 
+    if(np.array_equal(color,verde)):
+        return "g"
+    if(np.array_equal(color,naranja)):
+        return "o"
+    if(np.array_equal(color,amarillo)):
+        return "y"
+    if(np.array_equal(color,rojo)):
+        return "r"
+    if(np.array_equal(color,blanco)):
+        return "w"
+    if(np.array_equal(color,azul)):
+        return "b"
+#Returns an array that indicates which colors are in ona face
+def obtainColors(mask):
+    while(True):
+        # Capture frame-by-frame
+        _, frame = cap.read()
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         #Apply mask to image
         masked = cv2.bitwise_and(hsv,hsv, mask=mask)
-
         #Convert again to BGR format
         masked = cv2.cvtColor(masked, cv2.COLOR_HSV2BGR)
         
@@ -105,7 +140,9 @@ def Obtain_Mask():
         _,contours,_ = cv2.findContours(mask,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
 
         na=1
+        ret=np.array(["","","","","","","","",""])
         for cnt in contours:
+            
             #len(cnt) number of sides 3 triangle...
             #area = cv2.contourArea(cnt) 
             approx = cv2.approxPolyDP(cnt,0.08*cv2.arcLength(cnt,True),True)#approx, list of points of the rectangle
@@ -117,27 +154,73 @@ def Obtain_Mask():
             mom = cv2.moments(cnt)
             #Obtains the center using moments
             cen = (int(mom['m10'] / (mom['m00'] + 1e-5)), int(mom['m01'] / (mom['m00'] + 1e-5))) #mx,my
-            print("Centro del cuadro :"+str(na))
-            print(cen)
-            print("Color del centro del cuadro")
-            print(frame[x][y])
-            #Print contours
+            
             cv2.drawContours(frame,[approx],0,(0,0,0),5)
             #Write name of the contour
-            cv2.putText(frame,"Cell"+str(na),(x,y+20),font,.4,(255,255,255),1)
-            na+=1
+            
+            
+            color = frame[cen[1]][cen[0]]
+            ret[9-na]=checkCol(color)
+            cv2.putText(frame,ret[9-na]+str(9-(na-1)),(x+20,y+40),font,.5,(0,0,0),2)
 
+            na+=1
+        #ret=ret[:-1]
+        cv2.putText(frame,"Press W key",(150,100),font,.5,(0,0,0),2)
         # Display the resulting frame
         cv2.imshow('Frame',frame)
-        cv2.imshow('Mask',mask)
-        cv2.imshow('Masked',masked)
+        
         #Waits for a user input to quit the application
+        if cv2.waitKey(1) & 0xFF == ord('w'):
+            return ret
+
+    
+
+def message(mss):
+    blackscreen = np.zeros((480,640))
+    while(True):
+        cv2.putText(blackscreen,mss+" then press Q key",(0,100),font,.5,(254,254,254),2)
+        cv2.imshow('Message',blackscreen)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+    
+#Inicialices faces
+faces=[]
 
-    cap.release()
-    cv2.destroyAllWindows()
+message("Reset the cube")
+cv2.destroyAllWindows()
+mask = Obtain_Mask()
+cv2.destroyAllWindows()
 
-Obtain_Mask()
-## Obtained from calibration
+message("Scramble the cube")
+cv2.destroyAllWindows()
+faces.append(obtainColors(mask))
 
+message("Select Orange as front face and Green as up face")
+cv2.destroyAllWindows()
+faces.append(obtainColors(mask))
+
+message("Select Yellow as front face")
+cv2.destroyAllWindows()
+faces.append(obtainColors(mask))
+
+message("Select Red as front face")
+cv2.destroyAllWindows()
+faces.append(obtainColors(mask))
+
+message("Select White as front face")
+cv2.destroyAllWindows()
+faces.append(obtainColors(mask))
+
+message("Select Blue as front face")
+cv2.destroyAllWindows()
+faces.append(obtainColors(mask))
+
+cap.release()
+send=''
+for i in faces:
+    for j in i:
+        send+=j
+    print(i)
+print(send)
+
+print(utils.solve(send, 'Kociemba'))
