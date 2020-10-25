@@ -1,4 +1,6 @@
+#Library used to process data
 import numpy as np
+#Library used to have acces to camera
 import cv2 as cv2
 from rubik_solver import utils
 
@@ -44,7 +46,7 @@ def creatBar():
     cv2.namedWindow("Kernel Size")
     cv2.createTrackbar("KS","Kernel Size",0,255,nothing)
 
-#Returns mask if user don't want to calibrate
+#Returns the values to generate mask if user don't want to calibrate
 def noCali():
     l_h = 58
     l_s = 201
@@ -173,8 +175,7 @@ def obtainColors(mask):
         if cv2.waitKey(1) & 0xFF == ord('w'):
             return ret
 
-    
-
+#Generates a black image with a message
 def message(mss):
     blackscreen = np.zeros((480,640))
     while(True):
@@ -191,15 +192,11 @@ cv2.destroyAllWindows()
 mask = Obtain_Mask()
 cv2.destroyAllWindows()
 
-message("Scramble the cube")
+message("Scramble the cube and select Yellow as front and Orange as top")
 cv2.destroyAllWindows()
 faces.append(obtainColors(mask))
 
-message("Select Orange as front face and Green as up face")
-cv2.destroyAllWindows()
-faces.append(obtainColors(mask))
-
-message("Select Yellow as front face")
+message("Select Blue as front face and Yellow as top face")
 cv2.destroyAllWindows()
 faces.append(obtainColors(mask))
 
@@ -207,13 +204,20 @@ message("Select Red as front face")
 cv2.destroyAllWindows()
 faces.append(obtainColors(mask))
 
-message("Select White as front face")
+message("Select Green as front face")
 cv2.destroyAllWindows()
 faces.append(obtainColors(mask))
 
-message("Select Blue as front face")
+message("Select Orange as front face")
 cv2.destroyAllWindows()
 faces.append(obtainColors(mask))
+
+message("Select White as front face and Red as top face")
+cv2.destroyAllWindows()
+faces.append(obtainColors(mask))
+
+message("Select Green as front face and White as top face")
+cv2.destroyAllWindows()
 
 cap.release()
 send=''
@@ -221,6 +225,58 @@ for i in faces:
     for j in i:
         send+=j
     print(i)
-print(send)
 
-print(utils.solve(send, 'Kociemba'))
+print(send)
+solution = utils.solve(send, 'Kociemba')
+#from rubik.cube import Cube not used 
+#print(Cube(send))
+
+#Libraries used to acces to comunication
+import socket
+import array as arr
+
+# Dictionary of cube moves
+movesDict = {
+	"D":	0,
+	"D2": 	1,
+	"D'": 	2,
+	"L": 	3,
+	"L2": 	4,
+	"L'": 	5,
+	"F": 	6,
+	"F2": 	7,
+	"F'": 	8,
+	"R": 	9,
+	"R2": 	10,
+	"R'": 	11,
+	"B": 	12,
+	"B2":	13,
+	"B'":	14,
+	"U": 	15,
+	"U2":	16,
+	"U'":	17
+}
+#Obtain the number of moves
+nMoves = len(solution)
+command = 0xFB
+payloadLen = nMoves
+#Start the format message
+packet = arr.array('B', [0] * (payloadLen + 2))
+packet[0] = command
+packet[1] = payloadLen
+print(solution)
+#for idx in range(0, nMoves):
+solution2=[]
+for i in solution:
+    solution2.append(str(i))
+print(solution2)
+for idx in range(0, nMoves):
+    packet[idx + 2] = movesDict[solution2[idx]]
+
+# Connect TCP/IP client to localhost in port 2500
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client.connect(("localhost", 2500))
+
+# Write packet to cube simulator
+client.send(packet)
+client.close()
